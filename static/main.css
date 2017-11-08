@@ -1,0 +1,13 @@
+.container {
+	width: 800px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-start;
+	font-size: 2em;
+	margin: auto;
+}
+
+.child {
+
+}
