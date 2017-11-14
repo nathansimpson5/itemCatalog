@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect,url_for
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, User, Sport
+from database_setup import Base, User, Sport, Item
 
 
 engine = create_engine('sqlite:///itemCatalog.db')
@@ -13,7 +13,8 @@ session = DBSession()
 app = Flask(__name__)
 
 @app.route('/')
-def hello_world():
+@app.route('/sport')
+def showSports():
 	sports = session.query(Sport).all()
 	return render_template('index.html', sports = sports)
 
@@ -22,14 +23,25 @@ def loginPage():
 	return render_template('login.html')
 
 # SQL Create (CRUD)
-@app.route('/addsport', methods=['GET', 'POST'])
+@app.route('/sport/new', methods=['GET', 'POST'])
 def addSport():
 	if request.method == 'GET':
 		return render_template('addsport.html')
 
 	elif request.method == 'POST':
-		sportName = request.form['sportName']
-		return newSport(sportName)
+		newSport = Sport(
+			sportName=request.form['sportName'])
+		session.add(newSport)
+		session.commit()
+		return redirect(url_for('showSports'))
+
+
+# Show a sport's item list
+@app.route('/sport/<int:sport_id>/')
+def showCatalog(sport_id):
+	sport = session.query(Sport).filter_by(id=sport_id).one()
+	items = session.query(Item).filter_by(sport_id=sport_id).all()
+	return getAllSports()
 
 
 def getAllSports():

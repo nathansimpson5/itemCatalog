@@ -1,0 +1,13 @@
+{% extends "index.html" %}
+{% block content %}
+{% include "header.html" %}
+
+	<div>
+		{% for sport in sports %}
+			<a href="{{url_for('showSports',sport_id=sport.id)}}">{{sport.sportName}}</a>
+			<br>
+		{% endfor %}
+	</div>
+	<div>description of items go here</div>
+
+{% endblock %}
