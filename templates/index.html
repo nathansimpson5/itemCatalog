@@ -17,7 +17,11 @@
 	<hr>
 
 	<section class="container">
-		<div>sports go here</div>
+		<div>
+			{% for sport in sports %}
+				<a href="#">{{sport.sportName}}</a>
+			{% endfor %}
+		</div>
 		<div>description of items go here</div>
 	</section>
 

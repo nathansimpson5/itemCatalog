@@ -14,12 +14,14 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return render_template('index.html')
+	sports = session.query(Sport).all()
+	return render_template('index.html', sports = sports)
 
 @app.route('/login', methods=['GET', 'POST'])
 def loginPage():
 	return render_template('login.html')
 
+# SQL Create (CRUD)
 @app.route('/addsport', methods=['GET', 'POST'])
 def addSport():
 	if request.method == 'GET':
