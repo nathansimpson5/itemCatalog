@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect,url_for
-from sqlalchemy import create_engine, asc
+from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Sport, Item
 
@@ -16,7 +16,8 @@ app = Flask(__name__)
 @app.route('/sport/')
 def showSports():
 	sports = session.query(Sport).order_by(asc(Sport.sportName))
-	items = session.query(Item).all()
+	items = session.query(Item).order_by(desc(Item.id))
+	all = session.query(Sport, )
 	return render_template('sports.html', sports = sports, items = items)
 
 @app.route('/login', methods=['GET', 'POST'])

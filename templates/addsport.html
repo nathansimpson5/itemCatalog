@@ -1,21 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title></title>
-</head>
-<body>
-	<form method="post">
-		<div>
-			<input type="text" name="sportName" placeholder="sport name">
-		</div>
-		<div>
-			<input type="submit" name="Add sport">
-		</div>
-	</form>
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
 
+<form method="post">
 	<div>
-		<a href="/">back home</a>
+		<input type="text" name="sportName" placeholder="sport name">
 	</div>
+	<div>
+		<button type="submit">Add sport</button>
+	</div>
+</form>
 
-</body>
-</html>
+{% endblock %}
