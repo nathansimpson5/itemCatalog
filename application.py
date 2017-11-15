@@ -12,12 +12,13 @@ session = DBSession()
 
 app = Flask(__name__)
 
+
+# home page (SQL Read (CRUD))
 @app.route('/')
 @app.route('/sport/')
 def showSports():
 	sports = session.query(Sport).order_by(asc(Sport.sportName))
 	items = session.query(Item).order_by(desc(Item.id))
-	all = session.query(Sport, )
 	return render_template('sports.html', sports = sports, items = items)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -37,6 +38,7 @@ def addSport():
 		session.commit()
 		return redirect(url_for('showSports'))
 
+# SQL Update (CRUD)
 @app.route('/sport/<int:sport_id>/edit/', methods=['GET', 'POST'])
 def editSport(sport_id):
 	editedSport = session.query(Sport).filter_by(id=sport_id).one()
@@ -49,6 +51,7 @@ def editSport(sport_id):
 	else:
 		return render_template('editsport.html', sport = editedSport)
 
+# SQL Delete (CRUD)
 @app.route('/sport/<int:sport_id>/delete/', methods=['GET', 'POST'])
 def deleteSport(sport_id):
 	deletedSport = session.query(Sport).filter_by(id=sport_id).one()
