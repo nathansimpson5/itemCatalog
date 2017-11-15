@@ -48,6 +48,16 @@ def editSport(sport_id):
 	else:
 		return render_template('editsport.html', sport = editedSport)
 
+@app.route('/sport/<int:sport_id>/delete/', methods=['GET', 'POST'])
+def deleteSport(sport_id):
+	deletedSport = session.query(Sport).filter_by(id=sport_id).one()
+	if request.method == 'POST':
+		session.delete(deletedSport)
+		session.commit()
+		return redirect(url_for('showSports'))
+	else:
+		return render_template('deletesport.html', sport = deletedSport)
+
 # Show a sport's item list
 @app.route('/sport/<int:sport_id>/')
 @app.route('/sport/<int:sport_id>/catalog/')

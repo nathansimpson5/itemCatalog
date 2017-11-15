@@ -1,0 +1,19 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+<div>
+	<h1>Are you sure you want to delete {{sport.sportName}}?</h1>
+</div>
+
+<div>
+	<form action="{{url_for('deleteSport', sport_id = sport.id)}}" method="post">
+		<button type="submit">Delete</button>
+		<a href="{{url_for('showSports')}}">
+			<button>Cancel</button>
+		</a>
+	</form>
+</div>
+
+
+{% endblock %}
