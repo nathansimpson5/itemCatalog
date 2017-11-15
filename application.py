@@ -13,10 +13,11 @@ session = DBSession()
 app = Flask(__name__)
 
 @app.route('/')
-@app.route('/sport')
+@app.route('/sport/')
 def showSports():
 	sports = session.query(Sport).all()
-	return render_template('index.html', sports = sports)
+	items = session.query(Item).all()
+	return render_template('sports.html', sports = sports, items = items)
 
 @app.route('/login', methods=['GET', 'POST'])
 def loginPage():
@@ -38,10 +39,12 @@ def addSport():
 
 # Show a sport's item list
 @app.route('/sport/<int:sport_id>/')
+@app.route('/sport/<int:sport_id>/catalog/')
 def showCatalog(sport_id):
 	sport = session.query(Sport).filter_by(id=sport_id).one()
 	items = session.query(Item).filter_by(sport_id=sport_id).all()
-	return getAllSports()
+	return render_template('catalog.html', sport = sport, items = items)
+
 
 
 def getAllSports():

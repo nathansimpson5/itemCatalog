@@ -1,0 +1,11 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+<div><h2>{{ sport.sportName }}</h2></div>
+
+{% for item in items %}
+	<div><h4>{{ item.name }}</h4></div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+	<section class="container">
+		<div>
+			<h3>All sports</h3>
+			{% for sport in sports %}
+				<a href="{{url_for('showCatalog',sport_id=sport.id)}}">{{sport.sportName}}</a>
+				<br>
+			{% endfor %}
+		</div>
+		<div>
+			<h3>Rrecently added</h3>
+			{% for item in items %}
+				<div>{{ item.name }}</div>
+			{% endfor %}
+		</div>
+	</section>
+
+{% endblock %}
