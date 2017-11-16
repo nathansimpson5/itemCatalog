@@ -85,11 +85,28 @@ def addCatalogItem(sport_id):
 	else:
 		return render_template('newcatalogitem.html', sport_id=sport_id)
 
+# view individual item and description
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/')
 def viewItem(sport_id, item_id):
 	sport = session.query(Sport).filter_by(id=sport_id).one()
 	item = session.query(Item).filter_by(id=item_id).one()
-	return render_template('viewitem.html', sport_id=sport_id, item_id=item_id, item=item)
+	return render_template('viewitem.html', sport_id=sport_id, item_id=item_id, item=item, sport=sport)
+
+# edit individual item
+@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/edit', methods=['GET','POST'])
+def editItem(sport_id, item_id):
+	sport = session.query(Sport).filter_by(id=sport_id).one()
+	editedItem = session.query(Item).filter_by(id=item_id).one()
+	if request.method == 'POST':
+		if request.form['name']:
+			editedItem.name = request.form['name']
+		if request.form['description']:
+			editedItem.description = request.form['description']	
+		session.add(editedItem)
+		session.commit()
+		return redirect(url_for('showCatalog', sport_id = sport_id))
+	else:
+		return render_template('edititem.html', sport_id = sport_id, item_id = item_id, sport=sport,  item = editedItem)
 
 
 def getAllSports():
