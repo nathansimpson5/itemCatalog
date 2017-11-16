@@ -85,6 +85,12 @@ def addCatalogItem(sport_id):
 	else:
 		return render_template('newcatalogitem.html', sport_id=sport_id)
 
+@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/')
+def viewItem(sport_id, item_id):
+	sport = session.query(Sport).filter_by(id=sport_id).one()
+	item = session.query(Item).filter_by(id=item_id).one()
+	return render_template('viewitem.html', sport_id=sport_id, item_id=item_id, item=item)
+
 
 def getAllSports():
 	sports = session.query(Sport).all()
