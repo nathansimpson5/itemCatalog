@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect,url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Sport, Item
@@ -23,23 +23,27 @@ session = DBSession()
 app = Flask(__name__)
 
 CLIENT_ID = json.loads(
-	open('client_secrets.json', 'r').read())['web']['client_id']
+    open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Item Catalog App"
+
 
 # home page (SQL Read (CRUD))
 @app.route('/')
 @app.route('/sport/')
 def showSports():
-	sports = session.query(Sport).order_by(asc(Sport.sportName))
-	items = session.query(Item).order_by(desc(Item.id))
-	return render_template('sports.html', sports = sports, items = items)
+    sports = session.query(Sport).order_by(asc(Sport.sportName))
+    items = session.query(Item).order_by(desc(Item.id))
+    return render_template('sports.html', sports=sports, items=items)
+
 
 # Make a token for oauth
 @app.route('/login')
 def loginPage():
-	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
-	login_session['state'] = state
-	return render_template('login.html', STATE=state)
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+    	            for x in xrange(32))
+    login_session['state'] = state
+    return render_template('login.html', STATE=state)
+
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -93,7 +97,7 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
+        response = make_response(json.dumps('Current user already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -182,6 +186,7 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
 
+
 # JSON APIs to view Catalog Information
 @app.route('/sport/<int:sport_id>/JSON')
 def itemCatalogJSON(sport_id):
@@ -202,105 +207,114 @@ def sportsJSON():
     sports = session.query(Sport).all()
     return jsonify(sports=[r.serialize for r in sports])
 
+
 # SQL Create (CRUD)
 @app.route('/sport/new', methods=['GET', 'POST'])
 def addSport():
-	if 'username' not in login_session:
-		return redirect('/login')
-	if request.method == 'GET':
-		return render_template('addsport.html')
-	elif request.method == 'POST':
-		newSport = Sport(
-			sportName=request.form['sportName'],
-			user_id = login_session['user_id'])
-		session.add(newSport)
-		session.commit()
-		return redirect(url_for('showSports'))
+    if 'username' not in login_session:
+        return redirect('/login')
+    if request.method == 'GET':
+        return render_template('addsport.html')
+    elif request.method == 'POST':
+        newSport = Sport(
+            sportName=request.form['sportName'],
+            user_id=login_session['user_id'])
+        session.add(newSport)
+        session.commit()
+        return redirect(url_for('showSports'))
+
 
 # SQL Update (CRUD)
 @app.route('/sport/<int:sport_id>/edit/', methods=['GET', 'POST'])
 def editSport(sport_id):
-	editedSport = session.query(Sport).filter_by(id=sport_id).one()
-	if request.method == 'POST':
-		if request.form['sportName']:
-			editedSport.sportName = request.form['sportName']
-			editedSport.user_id = login_session['user_id']
-			session.add(editedSport)
-			session.commit()
-			return redirect(url_for('showSports'))
-	else:
-		return render_template('editsport.html', sport = editedSport)
+    if 'username' not in login_session:
+        return redirect('/login')
+    editedSport = session.query(Sport).filter_by(id=sport_id).one()
+    if request.method == 'POST':
+        if request.form['sportName']:
+            editedSport.sportName = request.form['sportName']
+            editedSport.user_id = login_session['user_id']
+            session.add(editedSport)
+            session.commit()
+            return redirect(url_for('showSports'))
+    else:
+        return render_template('editsport.html', sport=editedSport)
+
 
 # SQL Delete (CRUD)
 @app.route('/sport/<int:sport_id>/delete/', methods=['GET', 'POST'])
 def deleteSport(sport_id):
-	deletedSport = session.query(Sport).filter_by(id=sport_id).one()
-	if request.method == 'POST':
-		session.delete(deletedSport)
-		session.commit()
-		return redirect(url_for('showSports'))
-	else:
-		return render_template('deletesport.html', sport = deletedSport)
+    if 'username' not in login_session:
+        return redirect('/login')
+    deletedSport = session.query(Sport).filter_by(id=sport_id).one()
+    if request.method == 'POST':
+        session.delete(deletedSport)
+        session.commit()
+        return redirect(url_for('showSports'))
+    else:
+        return render_template('deletesport.html', sport=deletedSport)
+
 
 # Show a sport's item list
 @app.route('/sport/<int:sport_id>/')
 @app.route('/sport/<int:sport_id>/catalog/')
 def showCatalog(sport_id):
-	sport = session.query(Sport).filter_by(id=sport_id).one()
-	items = session.query(Item).filter_by(sport_id=sport_id).all()
-	return render_template('catalog.html', sport = sport, items = items)
+    sport = session.query(Sport).filter_by(id=sport_id).one()
+    items = session.query(Item).filter_by(sport_id=sport_id).all()
+    return render_template('catalog.html', sport=sport, items=items)
+
 
 # Add catalog item to specific sport
 @app.route('/sport/<int:sport_id>/new', methods=['GET', 'POST'])
 def addCatalogItem(sport_id):
-	sport = session.query(Sport).filter_by(id=sport_id).one()
-	if request.method == 'POST':
-		newCatalogItem = Item(
-			name = request.form['itemName'],
-			description = request.form['itemDescription'],
-			sport_id = sport_id)
-		session.add(newCatalogItem)
-		session.commit()
-		return redirect(url_for('showCatalog', sport_id = sport_id))
-	else:
-		return render_template('newcatalogitem.html', sport_id=sport_id)
+    if 'username' not in login_session:
+        return redirect('/login')
+    sport = session.query(Sport).filter_by(id=sport_id).one()
+    if request.method == 'POST':
+        newCatalogItem = Item(
+            name=request.form['itemName'],
+            description=request.form['itemDescription'],
+            sport_id=sport_id,
+            user_id=login_session['user_id'])
+        session.add(newCatalogItem)
+        session.commit()
+        return redirect(url_for('showCatalog', sport_id=sport_id))
+    else:
+        return render_template('newcatalogitem.html', sport_id=sport_id)
+
 
 # view individual item and description
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/')
 def viewItem(sport_id, item_id):
-	sport = session.query(Sport).filter_by(id=sport_id).one()
-	item = session.query(Item).filter_by(id=item_id).one()
-	return render_template('viewitem.html', sport_id=sport_id, item_id=item_id, item=item, sport=sport)
+    sport = session.query(Sport).filter_by(id=sport_id).one()
+    item = session.query(Item).filter_by(id=item_id).one()
+    return render_template('viewitem.html', sport_id=sport_id, item_id=item_id,
+                           item=item, sport=sport)
+
 
 # edit individual item
-@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/edit', methods=['GET','POST'])
+@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/edit',
+           methods=['GET', 'POST'])
 def editItem(sport_id, item_id):
-	sport = session.query(Sport).filter_by(id=sport_id).one()
-	editedItem = session.query(Item).filter_by(id=item_id).one()
-	if request.method == 'POST':
-		if request.form['name']:
-			editedItem.name = request.form['name']
-		if request.form['description']:
-			editedItem.description = request.form['description']	
-		session.add(editedItem)
-		session.commit()
-		return redirect(url_for('showCatalog', sport_id = sport_id))
-	else:
-		return render_template('edititem.html', sport_id = sport_id, item_id = item_id, sport=sport,  item = editedItem)
-
-
-def getAllSports():
-	sports = session.query(Sport).all()
-	return jsonify(Sports=[i.serialize for i in sports])
-
-def newSport(sportName):
-	sportName = Sport(sportName=sportName)
-	session.add(sportName)
-	session.commit()
-	return getAllSports()
+    if 'username' not in login_session:
+        return redirect('/login')
+    sport = session.query(Sport).filter_by(id=sport_id).one()
+    editedItem = session.query(Item).filter_by(id=item_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            editedItem.name = request.form['name']
+        if request.form['description']:
+            editedItem.description = request.form['description']
+        editedItem.user_id = login_session['user_id']
+        session.add(editedItem)
+        session.commit()
+        return redirect(url_for('showCatalog', sport_id=sport_id))
+    else:
+        return render_template('edititem.html', sport_id=sport_id,
+                               item_id=item_id, sport=sport,  item=editedItem)
 
 
 if __name__ == '__main__':
-	app.secret_key = "0R1u6gZSHgNdxmFS-ZB1fyk3" 
-	app.debug = True
-	app.run(host='0.0.0.0', port=5000)	
+    app.secret_key = "0R1u6gZSHgNdxmFS-ZB1fyk3"
+    app.debug = True
+    app.run(host='0.0.0.0', port=5000)
