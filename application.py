@@ -174,13 +174,33 @@ def gdisconnect():
 
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
-        return response
+        return redirect(url_for('showSports'))
     else:
         # For whatever reason, the given token was invalid.
         response = make_response(
             json.dumps('Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
+
+# JSON APIs to view Catalog Information
+@app.route('/sport/<int:sport_id>/JSON')
+def itemCatalogJSON(sport_id):
+    sport = session.query(Sport).filter_by(id=sport_id).one()
+    items = session.query(Item).filter_by(
+        sport_id=sport_id).all()
+    return jsonify(Sport=[i.serialize for i in items])
+
+
+@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/JSON')
+def catalogItemJSON(sport_id, item_id):
+    catalogItem = session.query(Item).filter_by(id=item_id).one()
+    return jsonify(Item=catalogItem.serialize)
+
+
+@app.route('/sport/JSON')
+def sportsJSON():
+    sports = session.query(Sport).all()
+    return jsonify(sports=[r.serialize for r in sports])
 
 # SQL Create (CRUD)
 @app.route('/sport/new', methods=['GET', 'POST'])
