@@ -205,12 +205,14 @@ def sportsJSON():
 # SQL Create (CRUD)
 @app.route('/sport/new', methods=['GET', 'POST'])
 def addSport():
+	if 'username' not in login_session:
+		return redirect('/login')
 	if request.method == 'GET':
 		return render_template('addsport.html')
-
 	elif request.method == 'POST':
 		newSport = Sport(
-			sportName=request.form['sportName'])
+			sportName=request.form['sportName'],
+			user_id = login_session['user_id'])
 		session.add(newSport)
 		session.commit()
 		return redirect(url_for('showSports'))
@@ -222,6 +224,7 @@ def editSport(sport_id):
 	if request.method == 'POST':
 		if request.form['sportName']:
 			editedSport.sportName = request.form['sportName']
+			editedSport.user_id = login_session['user_id']
 			session.add(editedSport)
 			session.commit()
 			return redirect(url_for('showSports'))
