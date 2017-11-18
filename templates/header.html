@@ -1,8 +1,15 @@
 <nav class="container">
 
 	<a href='/'><div>Catalog App</div></a>
-	<div><a href="/login"><button type="button">Login</button></a></div>
-	<div><a href="/gdisconnect"><button type="button">Logout</button></a></div>
+	{% if 'username' not in session %}
+		<div><a href={{ url_for('loginPage') }}>
+			<button type="button">Login</button>
+		</a></div>
+	{% else %}
+		<div><a href={{ url_for('gdisconnect') }}>
+			<button type="button">Logout</button>
+		</a></div>
+	{% endif %}
 	<div><a href="/sport/new"><button type="button">Add sport</button></a></div>
 </nav>
 
