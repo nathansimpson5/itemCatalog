@@ -6,7 +6,7 @@
 <div><h2>{{ sport.sportName }}</h2></div>
 
 {% for item in items %}
-	<div><a href="{{url_for('viewItem', sport_id=sport.id, item_id=item.id)}}"><h4>{{ item.name }}</h4></a> - ({{item.user_id}})</div>
+	<div><a href="{{url_for('viewItem', sport_id=sport.id, item_id=item.id)}}"><h4>{{ item.name }}</h4></a></div>
 {% endfor %}
 
 </section>

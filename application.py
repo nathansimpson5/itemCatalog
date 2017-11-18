@@ -463,6 +463,25 @@ def editItem(sport_id, item_id):
                                item_id=item_id, sport=sport,  item=editedItem)
 
 
+@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/delete', methods=['GET', 'POST'])
+@login_required
+@check_item
+@check_item_owner
+def deleteItem(sport_id, item_id):
+    """
+    Delete an individual item
+    """
+
+    sport = session.query(Sport).filter_by(id=sport_id).one()
+    deletedItem = session.query(Item).filter_by(id=item_id).one()
+    if request.method == 'POST':
+        session.delete(deletedItem)
+        session.commit()
+        return redirect(url_for('showSports'))
+    else:
+        return render_template('deleteitem.html', sport_id=sport_id,
+                               item_id=item_id, sport=sport, item=deletedItem)
+
 if __name__ == '__main__':
     app.secret_key = "0R1u6gZSHgNdxmFS-ZB1fyk3"
     app.debug = True
