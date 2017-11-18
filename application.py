@@ -144,9 +144,10 @@ def gconnect():
 
 # User Helper Functions
 
+
 def login_required(func):
     """
-    Decorator to check if user is logged in. 
+    Decorator to check if user is logged in.
     """
 
     @wraps(func)
@@ -223,6 +224,7 @@ def check_item_owner(func):
             return func(sport_id, item_id)
     return wrapper
 
+
 def createUser(login_session):
     """
     Create a new user in the database and returns the user id
@@ -281,8 +283,6 @@ def gdisconnect():
         del login_session['username']
         del login_session['email']
 
-        # response = make_response(json.dumps('Successfully disconnected.'), 200)
-        # response.headers['Content-Type'] = 'application/json'
         return redirect(url_for('showSports'))
     else:
         # For whatever reason, the given token was invalid.
@@ -463,7 +463,8 @@ def editItem(sport_id, item_id):
                                item_id=item_id, sport=sport,  item=editedItem)
 
 
-@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/delete', methods=['GET', 'POST'])
+@app.route('/sport/<int:sport_id>/catalog/<int:item_id>/delete',
+           methods=['GET', 'POST'])
 @login_required
 @check_item
 @check_item_owner
