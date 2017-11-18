@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 from database_setup import Base, User, Sport, Item
 
 from flask import session as login_session
+from functools import wraps
 import random
 import string
 
@@ -31,6 +33,10 @@ APPLICATION_NAME = "Item Catalog App"
 @app.route('/')
 @app.route('/sport/')
 def showSports():
+    """
+    Query the database for all sports and items and place them on the page.
+    """
+
     sports = session.query(Sport).order_by(asc(Sport.sportName))
     items = session.query(Item).order_by(desc(Item.id))
     return render_template('sports.html', sports=sports, items=items)
@@ -39,6 +45,10 @@ def showSports():
 # Make a token for oauth
 @app.route('/login')
 def loginPage():
+    """
+    Creates a random string to use as the state variable in the login.
+    """
+
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
     	            for x in xrange(32))
     login_session['state'] = state
@@ -47,6 +57,10 @@ def loginPage():
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """
+    Gather data from Google Sign In API and place it inside a session variable.
+    """
+
     # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -90,7 +104,6 @@ def gconnect():
     if result['issued_to'] != CLIENT_ID:
         response = make_response(
             json.dumps("Token's client ID does not match app's."), 401)
-        print "Token's client ID does not match app's."
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -127,13 +140,44 @@ def gconnect():
     output += '<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
-    print "done!"
     return output
 
 # User Helper Functions
 
+def login_required(func):
+    """
+    Decorator to check if user is logged in. 
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect('login')
+        else:
+            return func(*args, **kwargs)
+    return wrapper
+
+
+def check_category(func):
+    """
+    Decorator to check if category exists.
+    """
+
+    @wraps(func)
+    def wrapper(sport_id):
+        try:
+            sport = session.query(Sport).filter_by(id=sport_id).one()
+            return func(sport_id)
+        except NoResultFound:
+            return redirect(url_for('showSports'))
+    return wrapper
+
 
 def createUser(login_session):
+    """
+    Create a new user in the database and returns the user id
+    """
+
     newUser = User(username=login_session['username'], email=login_session[
                    'email'])
     session.add(newUser)
@@ -143,11 +187,19 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
+    """
+    Query the database using user id
+    """
+
     user = session.query(User).filter_by(id=user_id).one()
     return user
 
 
 def getUserID(email):
+    """
+    Query the database using email
+    """
+
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
@@ -155,10 +207,13 @@ def getUserID(email):
         return None
 
 
-# DISCONNECT - Revoke a current user's token and reset their login_session
 @app.route('/gdisconnect')
 def gdisconnect():
-        # Only disconnect a connected user.
+    """
+    Revoke a current user's toke and reset their login_session
+    """
+
+    # Only disconnect a connected user.
     access_token = login_session.get('access_token')
     if access_token is None:
         response = make_response(
@@ -190,6 +245,10 @@ def gdisconnect():
 # JSON APIs to view Catalog Information
 @app.route('/sport/<int:sport_id>/JSON')
 def itemCatalogJSON(sport_id):
+    """
+    Make a JSON endpoint to show all items in a specific sport
+    """
+
     sport = session.query(Sport).filter_by(id=sport_id).one()
     items = session.query(Item).filter_by(
         sport_id=sport_id).all()
@@ -198,21 +257,32 @@ def itemCatalogJSON(sport_id):
 
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/JSON')
 def catalogItemJSON(sport_id, item_id):
+    """
+    Make a JSON endpoint for a single catalog entry
+    """
+
     catalogItem = session.query(Item).filter_by(id=item_id).one()
     return jsonify(Item=catalogItem.serialize)
 
 
 @app.route('/sport/JSON')
 def sportsJSON():
+    """
+    Make a JSON endpoint for all sports
+    """
+
     sports = session.query(Sport).all()
     return jsonify(sports=[r.serialize for r in sports])
 
 
 # SQL Create (CRUD)
 @app.route('/sport/new', methods=['GET', 'POST'])
+@login_required
 def addSport():
-    if 'username' not in login_session:
-        return redirect('/login')
+    """
+    Create a new sport category
+    """
+
     if request.method == 'GET':
         return render_template('addsport.html')
     elif request.method == 'POST':
@@ -226,9 +296,13 @@ def addSport():
 
 # SQL Update (CRUD)
 @app.route('/sport/<int:sport_id>/edit/', methods=['GET', 'POST'])
+@login_required
+@check_category
 def editSport(sport_id):
-    if 'username' not in login_session:
-        return redirect('/login')
+    """
+    Edit a sport category
+    """
+
     editedSport = session.query(Sport).filter_by(id=sport_id).one()
     if request.method == 'POST':
         if request.form['sportName']:
@@ -243,9 +317,13 @@ def editSport(sport_id):
 
 # SQL Delete (CRUD)
 @app.route('/sport/<int:sport_id>/delete/', methods=['GET', 'POST'])
+@login_required
+@check_category
 def deleteSport(sport_id):
-    if 'username' not in login_session:
-        return redirect('/login')
+    """
+    Delete a sport category
+    """
+
     deletedSport = session.query(Sport).filter_by(id=sport_id).one()
     if request.method == 'POST':
         session.delete(deletedSport)
@@ -258,7 +336,12 @@ def deleteSport(sport_id):
 # Show a sport's item list
 @app.route('/sport/<int:sport_id>/')
 @app.route('/sport/<int:sport_id>/catalog/')
+@check_category
 def showCatalog(sport_id):
+    """
+    Show all items in a particular sport
+    """
+
     sport = session.query(Sport).filter_by(id=sport_id).one()
     items = session.query(Item).filter_by(sport_id=sport_id).all()
     return render_template('catalog.html', sport=sport, items=items)
@@ -266,9 +349,13 @@ def showCatalog(sport_id):
 
 # Add catalog item to specific sport
 @app.route('/sport/<int:sport_id>/new', methods=['GET', 'POST'])
+@login_required
+@check_category
 def addCatalogItem(sport_id):
-    if 'username' not in login_session:
-        return redirect('/login')
+    """
+    Add an item to a sport
+    """
+
     sport = session.query(Sport).filter_by(id=sport_id).one()
     if request.method == 'POST':
         newCatalogItem = Item(
@@ -286,6 +373,10 @@ def addCatalogItem(sport_id):
 # view individual item and description
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/')
 def viewItem(sport_id, item_id):
+    """
+    View an individual item and its description
+    """
+
     sport = session.query(Sport).filter_by(id=sport_id).one()
     item = session.query(Item).filter_by(id=item_id).one()
     return render_template('viewitem.html', sport_id=sport_id, item_id=item_id,
@@ -295,9 +386,12 @@ def viewItem(sport_id, item_id):
 # edit individual item
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/edit',
            methods=['GET', 'POST'])
+@login_required
 def editItem(sport_id, item_id):
-    if 'username' not in login_session:
-        return redirect('/login')
+    """
+    Edit an individual item and its description
+    """
+
     sport = session.query(Sport).filter_by(id=sport_id).one()
     editedItem = session.query(Item).filter_by(id=item_id).one()
     if request.method == 'POST':
