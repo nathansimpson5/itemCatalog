@@ -6,7 +6,7 @@
 		<div>
 			<h3>All sports</h3>
 			{% for sport in sports %}
-				<a href="{{url_for('showCatalog',sport_id=sport.id)}}">{{sport.sportName}}</a>
+				<a href="{{url_for('showCatalog',sport_id=sport.id)}}">{{sport.sportName}}</a> - ({{ sport.user_id}})
 				<br>
 			{% endfor %}
 		</div>

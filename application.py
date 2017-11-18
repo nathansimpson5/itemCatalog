@@ -173,6 +173,56 @@ def check_category(func):
     return wrapper
 
 
+def check_item(func):
+    """
+    Decorator to check if item exists.
+    """
+
+    @wraps(func)
+    def wrapper(sport_id, item_id):
+        try:
+            sport = session.query(Sport).filter_by(id=sport_id).one()
+            item = session.query(Item).filter_by(id=sport_id).one()
+            return func(sport_id, item_id)
+        except NoResultFound:
+            return redirect(url_for('showSports'))
+    return wrapper
+
+
+def check_owner(func):
+    """
+    Check if owner before allowing to edit/delete.
+    """
+
+    @wraps(func)
+    def wrapper(sport_id):
+        sport = session.query(Sport).filter_by(id=sport_id).one()
+
+        creator = getUserInfo(sport.user_id)
+        user = getUserInfo(login_session['user_id'])
+
+        if creator.id != login_session['user_id']:
+            return redirect(url_for('showSports'))
+        else:
+            return func(sport_id)
+    return wrapper
+
+
+def check_item_owner(func):
+    @wraps(func)
+    def wrapper(sport_id, item_id):
+        sport = session.query(Sport).filter_by(id=sport_id).one()
+        item = session.query(Item).filter_by(id=item_id).one()
+
+        itemOwner = getUserInfo(item.user_id)
+        user = getUserInfo(login_session['user_id'])
+
+        if itemOwner.id != login_session['user_id']:
+            return redirect(url_for('showSports'))
+        else:
+            return func(sport_id, item_id)
+    return wrapper
+
 def createUser(login_session):
     """
     Create a new user in the database and returns the user id
@@ -231,8 +281,8 @@ def gdisconnect():
         del login_session['username']
         del login_session['email']
 
-        response = make_response(json.dumps('Successfully disconnected.'), 200)
-        response.headers['Content-Type'] = 'application/json'
+        # response = make_response(json.dumps('Successfully disconnected.'), 200)
+        # response.headers['Content-Type'] = 'application/json'
         return redirect(url_for('showSports'))
     else:
         # For whatever reason, the given token was invalid.
@@ -298,6 +348,7 @@ def addSport():
 @app.route('/sport/<int:sport_id>/edit/', methods=['GET', 'POST'])
 @login_required
 @check_category
+@check_owner
 def editSport(sport_id):
     """
     Edit a sport category
@@ -319,6 +370,7 @@ def editSport(sport_id):
 @app.route('/sport/<int:sport_id>/delete/', methods=['GET', 'POST'])
 @login_required
 @check_category
+@check_owner
 def deleteSport(sport_id):
     """
     Delete a sport category
@@ -372,6 +424,7 @@ def addCatalogItem(sport_id):
 
 # view individual item and description
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/')
+@check_item
 def viewItem(sport_id, item_id):
     """
     View an individual item and its description
@@ -387,6 +440,8 @@ def viewItem(sport_id, item_id):
 @app.route('/sport/<int:sport_id>/catalog/<int:item_id>/edit',
            methods=['GET', 'POST'])
 @login_required
+@check_item
+@check_item_owner
 def editItem(sport_id, item_id):
     """
     Edit an individual item and its description
